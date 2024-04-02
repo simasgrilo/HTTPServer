@@ -3,56 +3,54 @@ package com.httpserver.grilo;
 import java.net.*;
 import java.io.*;
 import java.io.IOException;
+import com.httpserver.grilo.ClientHandler;
 
 public class HTTPServer {
 	private ServerSocket serverSocket;
-	private final int port = 80;
-	private String headers = "HTTP/1.1 200 OK \r\n\r\n";
-	private String indexPath = "resources/html/index.html";
+	private Socket clientSocket;
+	private int port = 80;
+	private final String headers = "HTTP/1.1 %s \r\n\r\n";
+	private String resourcePath = null;
+	private static final String OK = "200 OK ";
+	private static final String INDEX_PATH = "index.html";
+	private static final String INVALID_RES_PATH = "resources/html/notfound.html";
+	private static final String NOT_FOUND = "404 NOT FOUND";
 
+	public HTTPServer(String resourcePath) {
+		this.resourcePath = resourcePath;
+	}
+	
 	public void start() throws IOException {
 		this.serverSocket = new ServerSocket(this.port); //no sense in initializing the socket outside the start
 		System.out.println("Server running at port " + this.port);
 		while (true) {
-			Socket clientSocket = this.serverSocket.accept(); 
-			BufferedReader request = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-			PrintWriter response = new PrintWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
-			if (request != null) {
-				String[] uriRequest = request.readLine().split(" ");
-				try {
-					String requestedRes = uriRequest[uriRequest.length - 2]; // uriRequest[uriRequest.length - 2];
-					if (requestedRes.equals("/") ||
-						requestedRes.equals("/index.html")) {
-						this.serve(requestedRes, response);		
-					}
-				}
-				catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-
-			/*
-			String message =  this.headers + "Requested path: " +  requestedPath;
-			System.out.println("message: " + message);
-			response.write(message);
-			response.flush(); 
-			*/
-
-
+			new ClientHandler(this.serverSocket.accept(), this).start();
+			//TODO -- end thread execution after the page has been served?
 		}
-
+	}
+	
+	public String getResourcePath() {
+		return this.resourcePath;
+	}
+	
+	public Socket getClientSocket() {
+		return this.clientSocket;
 	}
 
-	public void serve(String path, PrintWriter response) throws IOException {
-		//TODO serve the requested file, as in a router method.
-		response.write(this.headers);
-		BufferedReader page = new BufferedReader(new FileReader(new File(this.indexPath)));
-		String line = page.readLine();
-		while (line != null) {
-			response.write(line);
-			line = page.readLine();
-		}
-		response.flush();
+	public String returnOk() {
+		return String.format(this.headers, this.OK);
+	}
+	
+	public String returnNotFound() {
+		return String.format(this.headers, this.NOT_FOUND);
+	}
+	
+	public String getIndexPath() {
+		return this.INDEX_PATH;
+	}
+	
+	public String getInvalidPath() {
+		return this.INVALID_RES_PATH;
 	}
 	
 	public void close() throws IOException {
