@@ -8,20 +8,29 @@ import com.httpserver.grilo.ClientHandler;
 public class HTTPServer {
 	private ServerSocket serverSocket;
 	private Socket clientSocket;
-	private final int PORT = 80;
-	private final String headers = "HTTP/1.1 %s OK \r\n\r\n";
-	private final String OK = "200";
-	private final String INDEX_PATH = "resources/html/index.html";
-	private final String INVALID_RES_PATH = "resources/html/notfound.html";
-	private final String NOT_FOUND = "404";
+	private int port = 80;
+	private final String headers = "HTTP/1.1 %s \r\n\r\n";
+	private String resourcePath = null;
+	private static final String OK = "200 OK ";
+	private static final String INDEX_PATH = "index.html";
+	private static final String INVALID_RES_PATH = "resources/html/notfound.html";
+	private static final String NOT_FOUND = "404 NOT FOUND";
 
+	public HTTPServer(String resourcePath) {
+		this.resourcePath = resourcePath;
+	}
+	
 	public void start() throws IOException {
-		this.serverSocket = new ServerSocket(this.PORT); //no sense in initializing the socket outside the start
-		System.out.println("Server running at port " + this.PORT);
+		this.serverSocket = new ServerSocket(this.port); //no sense in initializing the socket outside the start
+		System.out.println("Server running at port " + this.port);
 		while (true) {
 			new ClientHandler(this.serverSocket.accept(), this).start();
 			//TODO -- end thread execution after the page has been served?
 		}
+	}
+	
+	public String getResourcePath() {
+		return this.resourcePath;
 	}
 	
 	public Socket getClientSocket() {

@@ -31,13 +31,12 @@ public class ClientHandler extends Thread {
 				String[] uriRequest = request.readLine().split(" ");
 				String requestedRes = uriRequest[uriRequest.length - 2]; // uriRequest[uriRequest.length - 2];
 				//TODO - the request specifies the requested file. if it's in WWW and its subsidiaries, then we return it.
-				if (requestedRes.equals("/") || requestedRes.equals("/index.html")) {
+				if (requestedRes.equals("/")) {
 					//Thread.sleep(1000);
-					this.serve(this.server.getIndexPath(), response, this.server.returnOk());
+					this.serve(this.server.getIndexPath(), response);
 				}
 				else {
-					//invalid route:
-					this.serve(this.server.getInvalidPath(), response, this.server.returnNotFound());
+					this.serve(requestedRes.replace("/",""), response);
 				}
 			}
 		}
@@ -49,10 +48,19 @@ public class ClientHandler extends Thread {
 		}
 	}
 
-	public void serve(String path, PrintWriter response, String status) throws IOException {
+	public void serve(String path, PrintWriter response) throws IOException {
+		File file = FileResolver.resolve(server, path);
+		BufferedReader page = null;		
+		String status = null;
+		if (file != null) { 
+			status = server.returnOk();
+			page = new BufferedReader(new FileReader(file));
+		}
+		else {
+			status = server.returnNotFound();
+			page = new BufferedReader(new FileReader(new File(server.getInvalidPath())));
+		}
 		response.write(status);
-		//File file = FileResolver.resolve(path);
-		BufferedReader page = new BufferedReader(new FileReader(new File(path)));
 		String line = page.readLine();
 		while (line != null) {
 			response.write(line);
@@ -60,6 +68,7 @@ public class ClientHandler extends Thread {
 		}
 		response.write("<h1> This page was served by Thread " + this.getId() + "</h1>");
 		response.flush();
+		page.close();
 	}
 
 	public void close() throws IOException {
