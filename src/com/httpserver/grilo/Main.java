@@ -12,7 +12,7 @@ public class Main {
 		try {
 			//implementing runnable i need to instantiate an object of type Thread.
 			//Extending thread, your server is already a Thread object.
-			HTTPServer server = new HTTPServer("resources");	
+			Server server = new HTTPServer("resources");	
 			server.start();
 		}
 		catch (IOException e) {
