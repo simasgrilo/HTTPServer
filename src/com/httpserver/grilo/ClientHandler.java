@@ -12,13 +12,15 @@ import java.net.Socket;
 public class ClientHandler extends Thread {
 	//handler to handle multiple incoming requests
 	private Socket clientSocket;
-	private HTTPServer server;
+	private Server server;
 	private BufferedReader request;
 	private PrintWriter response;
+	private FileResolver fileResolver;
 
-	public ClientHandler(Socket socket, HTTPServer server) {
+	public ClientHandler(Socket socket, Server server) {
 		this.clientSocket = socket;
 		this.server = server;
+		this.fileResolver = new WinFileResolver();
 	}
 
 
@@ -30,9 +32,7 @@ public class ClientHandler extends Thread {
 			if (request != null) {
 				String[] uriRequest = request.readLine().split(" ");
 				String requestedRes = uriRequest[uriRequest.length - 2]; // uriRequest[uriRequest.length - 2];
-				//TODO - the request specifies the requested file. if it's in WWW and its subsidiaries, then we return it.
 				if (requestedRes.equals("/")) {
-					//Thread.sleep(1000);
 					this.serve(this.server.getIndexPath(), response);
 				}
 				else {
@@ -49,7 +49,7 @@ public class ClientHandler extends Thread {
 	}
 
 	public void serve(String path, PrintWriter response) throws IOException {
-		File file = FileResolver.resolve(server, path);
+		File file = this.fileResolver.resolve(server, path);
 		BufferedReader page = null;		
 		String status = null;
 		if (file != null) { 
